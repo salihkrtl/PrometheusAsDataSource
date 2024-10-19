@@ -1,94 +1,80 @@
-# Setting Up a Minikube Cluster with Helm, Prometheus, Grafana, and Thanos
+Minikube üzerinde Helm, Prometheus, Grafana ve Thanos kurulumunu resimlerle anlatan bir rehber aşağıdaki adımlarla ilerleyebilir:
 
-## Prerequisites
-- 🖥️ Minikube installed
-- 🛠️ kubectl installed
-- 🎛️ Helm installed
+### 1. **Minikube’i Kurmak**
+   İlk adım Minikube’in kurulumudur. Minikube, yerel bir Kubernetes kümesi oluşturmanızı sağlar.
 
-## Steps
+   ```bash
+   minikube start --memory=4096 --cpus=4
+   ```
 
-### 1. 🚀 Start Minikube
-```bash
-minikube start
-```
+   - Bu komut, Minikube’i 4GB RAM ve 4 CPU kullanarak başlatır.
+   
+   Görsel: Minikube’in çalıştığı terminal çıktısı
 
-### 2. 🔍 Verify Helm Installation
-Helm should already be installed as per the prerequisites. Verify the installation:
-```bash
-helm version
-```
+### 2. **Helm’i Kurmak**
+   Helm, Kubernetes için bir paket yöneticisidir. Helm chart'ları kullanarak uygulamaları kolayca kurabilirsiniz.
 
-### 3. ➕ Add Helm Repositories
-```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-echo "Helm repositories added successfully!"
-```
+   Helm’in kurulumunu yaptıktan sonra Minikube üzerinde kullanmaya başlayabilirsiniz.
 
-### 4. 📈 Install Prometheus
-```bash
-helm install prometheus prometheus-community/prometheus
-```
+   ```bash
+   helm repo add stable https://charts.helm.sh/stable
+   helm repo update
+   ```
 
-### 5. 📊 Install Grafana
-```bash
-helm install grafana grafana/grafana
-```
+   Görsel: Helm’in başarıyla kurulduğunu gösteren terminal çıktısı
 
-### 6. 🛡️ Install Thanos
-```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install thanos bitnami/thanos
-```
+### 3. **Prometheus Kurulumu**
+   Prometheus, metrikleri toplamak ve izlemek için kullanılan bir sistemdir. Helm ile Prometheus’u kurmak için:
 
-### 7. 🌐 Access Grafana
-Get the Grafana admin password:
-```bash
-kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
-```
-Forward the Grafana port:
-```bash
-kubectl port-forward svc/grafana 3000:80
-```
-Access Grafana at `http://localhost:3000` and log in with `admin` and the retrieved password.
+   ```bash
+   helm install prometheus stable/prometheus --namespace monitoring --create-namespace
+   ```
 
-### 8. 🌐 Access Prometheus
-Forward the Prometheus port:
-```bash
-kubectl port-forward svc/prometheus-server 9090:80
-```
-- **Local Environment:** Access Prometheus at `http://localhost:9090`.
-- **CodeSpaces Environment:** Access Prometheus at `https://friendly-rotary-phone-7w5g6j49r6hwr4p-9090.app.github.dev/graph?g0.expr=&g0.tab=1&g0.display_mode=lines&g0.show_exemplars=0&g0.range_input=1h`. Check ports with 9090.
+   - `--namespace monitoring`: Prometheus'u "monitoring" adlı bir namespace altında kurar.
 
-### 9. ➕ Add Prometheus as a Data Source in Grafana
-1. **Local:** Open Grafana in your browser at `http://localhost:3000`.
-    **CodeSpaces:** Open Grafana at `https://friendly-rotary-phone-7w5g6j49r6hwr4p-3000.app.github.dev/?orgId=1`.
-2. Log in with `admin` and the retrieved password.
-3. Go to **Configuration** > **Data Sources**.
-4. Click **Add data source**.
-5. Select **Prometheus**.
-6. Set the URL to `https://friendly-rotary-phone-7w5g6j49r6hwr4p-9090.app.github.dev`.
-7. Click **Save & Test** to verify the connection.
+   Görsel: Prometheus Helm chart kurulumunun başarıyla tamamlandığını gösteren ekran görüntüsü
 
-### 10. ✅ Verify Installations
-Check the status of the pods:
-```bash
-kubectl get pods
-```
-You should see pods for Prometheus, Grafana, and Thanos running.
+### 4. **Grafana Kurulumu**
+   Grafana, Prometheus gibi sistemlerden verileri görselleştirmenizi sağlar. Helm ile Grafana’yı kurabilirsiniz:
 
-### 🔄 Upgrade Instructions
-If you encounter an error, upgrade Prometheus:
-```bash
-helm install prometheus prometheus-community/prometheus -f /workspaces/PrometheusAsDataSource/SymbolicCode/prometheus.yml
-```
-For upgrade:
-```bash
-helm upgrade prometheus prometheus-community/prometheus -f /workspaces/PrometheusAsDataSource/SymbolicCode/prometheus.yaml
-```
-For Grafana upgrade:
-```bash
-helm upgrade grafana grafana/grafana -f /workspaces/PrometheusAsDataSource/SymbolicCode/grafana.yaml
-```
-Release "grafana" has been upgraded. Happy Helming!
+   ```bash
+   helm install grafana stable/grafana --namespace monitoring
+   ```
+
+   - Kurulumdan sonra Grafana’nın admin parolasını almak için:
+
+   ```bash
+   kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode
+   ```
+
+   Görsel: Grafana arayüzü ve admin giriş ekranı
+
+### 5. **Thanos Kurulumu**
+   Thanos, Prometheus metriklerini uzun süreli saklamak ve ölçeklendirmek için kullanılır. Thanos’u da Helm ile kurabiliriz:
+
+   ```bash
+   helm install thanos stable/thanos --namespace monitoring
+   ```
+
+   - Bu komut Thanos’un temel bileşenlerini Kubernetes cluster'ına kurar.
+
+   Görsel: Thanos kurulum aşamaları ve başarıyla tamamlanan terminal çıktısı
+
+### 6. **Port Forward ile Erişim**
+   Grafana ve Prometheus’u yerel tarayıcıdan görüntülemek için port yönlendirme yapabilirsiniz:
+
+   ```bash
+   kubectl port-forward svc/grafana 3000:80 --namespace monitoring
+   kubectl port-forward svc/prometheus-server 9090:80 --namespace monitoring
+   ```
+
+   - Bu komutlarla Grafana’yı `http://localhost:3000` ve Prometheus’u `http://localhost:9090` adresinden görüntüleyebilirsiniz.
+
+   Görsel: Browser üzerinden Grafana ve Prometheus arayüzlerinin görüntülenmesi.
+
+### 7. **Sonuç**
+   Artık Minikube üzerinde Prometheus, Grafana ve Thanos kurulu. Sistemi izlemeye ve grafikleri görselleştirmeye başlayabilirsiniz.
+
+---
+
+Bu adımları takip ederek Minikube üzerinde kolayca Prometheus, Grafana ve Thanos altyapısını kurabilirsiniz.
