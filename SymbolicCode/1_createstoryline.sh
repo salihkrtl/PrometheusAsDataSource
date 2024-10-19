@@ -1,13 +1,10 @@
-## Script
-
-```bash
 #!/bin/bash
 
 # List all files in the current directory
 files=(*)
 
-# Sort files by creation date
-sorted_files=($(ls -t --time=creation))
+# Sort files by modification date (no need for --time=modify, as it's default)
+sorted_files=($(ls -t))
 
 # Initialize counter
 counter=1
@@ -24,3 +21,4 @@ for file in "${sorted_files[@]}"; do
         ((counter++))
     fi
 done
+
